@@ -8,6 +8,8 @@ import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.UUID;
+
 /**
  * @author hpym365@gmail.com
  * @Description
@@ -87,8 +89,8 @@ public class RabbitMQConfig {
             @Override
             public void onMessage(Message message, Channel channel) throws Exception {
                 byte[] body = message.getBody();
-                String msg = new String(body,"utf-8");
-                System.out.println("ConsumerA direct receive the message:" +msg);
+                String msg = new String(body, "utf-8");
+                System.out.println("ConsumerA direct receive the message:" + msg);
             }
         });
 
@@ -105,8 +107,8 @@ public class RabbitMQConfig {
             @Override
             public void onMessage(Message message, Channel channel) throws Exception {
                 byte[] body = message.getBody();
-                String msg = new String(body,"utf-8");
-                System.out.println("ConsumerA topic receive the message:" +msg);
+                String msg = new String(body, "utf-8");
+                System.out.println("ConsumerA topic receive the message:" + msg);
             }
         });
 
@@ -122,12 +124,43 @@ public class RabbitMQConfig {
             @Override
             public void onMessage(Message message, Channel channel) throws Exception {
                 byte[] body = message.getBody();
-                String msg = new String(body,"utf-8");
-                System.out.println("ConsumerA fanout receive the message:" +msg);
+                String msg = new String(body, "utf-8");
+                System.out.println("ConsumerA fanout receive the message:" + msg);
             }
         });
 
         return listener;
     }
 
+
+    @Bean
+    // 该队列非持久化 独享 断开链接自动删除
+    public Queue getMultiConsumeQueue() {
+        return new Queue("consumer" + UUID.randomUUID().toString(), true, true, true);
+    }
+
+    @Bean
+    public Binding bindMultiConsumeQueue() {
+        return BindingBuilder.bind(getMultiConsumeQueue()).to(getDirectExchange()).with("direct");
+    }
+
+    @Bean
+    public SimpleMessageListenerContainer listenMultiConsumeQueue(ConnectionFactory connectionFactory) {
+        SimpleMessageListenerContainer listener = new SimpleMessageListenerContainer();
+//        listener.addQueueNames("direct");//这里可坚挺多个队列
+        listener.addQueues(getMultiConsumeQueue());
+        listener.setConcurrentConsumers(1);//并发数量
+        listener.setConnectionFactory(connectionFactory);
+        listener.setMessageListener(new ChannelAwareMessageListener() {
+
+            @Override
+            public void onMessage(Message message, Channel channel) throws Exception {
+                byte[] body = message.getBody();
+                String msg = new String(body, "utf-8");
+                System.out.println("ConsumerA MultiConsumeQueue receive the message:" + msg);
+            }
+        });
+
+        return listener;
+    }
 }
