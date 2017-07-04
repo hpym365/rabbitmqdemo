@@ -1,6 +1,9 @@
 package org.hp.ctrl;
 
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +19,9 @@ public class ProduceController {
 
     @Autowired
     RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    ConnectionFactory connectionFactory;
 
     @RequestMapping("/direct")
     public String direct(){
@@ -37,4 +43,16 @@ public class ProduceController {
     }
 
 
+    @RequestMapping("/multiple")
+    public String multiple(){
+        rabbitTemplate.convertAndSend("direct","multiple","multipleMessage");
+        return "send message to direct exchange with routingkey multiple";
+    }
+
+    @RequestMapping("/dynamicCreateExchange")
+    public String dynamicCreateExchange(){
+        RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
+        rabbitAdmin.declareExchange(new DirectExchange("dongtaichuangjian",false,true));
+        return "dynamicCreateExchange dongtaichuangjian when rabbitmq-server shutdown it will delete";
+    }
 }
