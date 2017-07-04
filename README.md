@@ -14,3 +14,6 @@ rabbitmq multiple consumer one queue
                 http://localhost:8080/multiple
                 
                 访问之后观察控制台
+                
+                动态创建交换区
+                http://localhost:8080/dynamicCreateExchange
